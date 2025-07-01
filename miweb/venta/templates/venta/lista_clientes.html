@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ titulo }}</title>
+    <style>
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>{{ titulo }}</h1>
+
+    <table>
+      <thead>
+        <tr>
+          <th>DNI</th>
+          <th>Apellidos y Nombres</th>
+          <th>Fecha Registro</th>
+          <th>Fecha Sistema</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cliente in clientes %}
+        <tr>
+          <td>{{ cliente.id_cliente }}</td>
+          <td>{{ cliente.ape_nom }}</td>
+          <td>{{ cliente.fec_reg|date:"d/m/Y" }}</td>
+          <td>{{ cliente.fec_sis|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4">No hay clientes registrados</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

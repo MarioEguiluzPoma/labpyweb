@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modificar Cliente</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .search-box {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .form-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: {% if cliente_encontrado %}block{% else %}none{% endif %};
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[readonly] {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+        .readonly-field {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-search {
+            background-color: #2196F3;
+            color: white;
+            flex: none;
+            width: 100px;
+        }
+        .btn-save {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-clear {
+            background-color: #f44336;
+            color: white;
+        }
+        .btn-search:hover {
+            background-color: #1976D2;
+        }
+        .btn-save:hover {
+            background-color: #45a049;
+        }
+        .btn-clear:hover {
+            background-color: #da190b;
+        }
+        .error {
+            color: red;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+        .readonly-info {
+            padding: 8px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            color: #666;
+        }
+        .search-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+        .search-input-group input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Modificar Cliente</h1>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}{{ message.tags }}{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Formulario de búsqueda -->
+        <div class="search-box">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="dni_busqueda">Buscar por DNI:</label>
+                    <div class="search-input-group">
+                        <input type="text" 
+                               id="dni_busqueda" 
+                               name="dni_busqueda" 
+                               value="{{ dni_buscado|default_if_none:'' }}" 
+                               maxlength="8" 
+                               placeholder="Ingrese DNI del cliente"
+                               required>
+                        <button type="submit" name="buscar" class="btn-search">Buscar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Formulario de edición (solo se muestra si se encontró un cliente) -->
+        {% if form and cliente_encontrado %}
+        <div class="form-container" id="form-container">
+            <h3>Datos del Cliente</h3>
+            <form method="post" id="clienteForm">
+                {% csrf_token %}
+                
+                <!-- Campo oculto para mantener el DNI buscado -->
+                <input type="hidden" name="dni_busqueda" value="{{ dni_buscado }}">
+                
+                <div class="form-group">
+                    <label>DNI:</label>
+                    <div class="readonly-info">{{ cliente.id_cliente }}</div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.ape_nom.label_tag }}
+                    {{ form.ape_nom }}
+                    {% if form.ape_nom.errors %}
+                        <div class="error">{{ form.ape_nom.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.fec_reg.label_tag }}
+                    {{ form.fec_reg }}
+                    {% if form.fec_reg.errors %}
+                        <div class="error">{{ form.fec_reg.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label>Fecha de Sistema (no editable):</label>
+                    <div class="readonly-info">
+                        {{ cliente.fec_sis|date:"d/m/Y H:i" }}
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" name="guardar" class="btn-save">Guardar Cliente</button>
+                    <button type="button" onclick="limpiarDatos()" class="btn-clear">Limpiar Datos</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function limpiarDatos() {
+            // Limpiar el campo de búsqueda
+            document.getElementById("dni_busqueda").value = "";
+            
+            // Ocultar el formulario de edición
+            const formContainer = document.getElementById("form-container");
+            if (formContainer) {
+                formContainer.style.display = "none";
+            }
+            
+            // Limpiar mensajes de error/éxito
+            const messages = document.querySelectorAll('.error, .success');
+            messages.forEach(msg => msg.remove());
+            
+            // Enfocar en el campo de búsqueda
+            document.getElementById("dni_busqueda").focus();
+        }
+        
+        // Auto-focus en el campo de búsqueda al cargar la página
+        window.onload = function() {
+            document.getElementById("dni_busqueda").focus();
+        };
+    </script>
+</body>
+</html>
