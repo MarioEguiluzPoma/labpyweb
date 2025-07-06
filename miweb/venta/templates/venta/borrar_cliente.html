@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eliminar Cliente</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .header-section h1 {
+            margin: 0;
+            color: #333;
+        }
+        .btn-exit {
+            background-color: #9E9E9E;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-exit:hover {
+            background-color: #757575;
+        }
+        .search-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .radio-group {
+            margin-bottom: 15px;
+        }
+        .radio-group label {
+            margin-right: 20px;
+            font-weight: normal;
+        }
+        .radio-group input[type="radio"] {
+            margin-right: 5px;
+        }
+        .search-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .search-input-group input[type="text"] {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .btn-search {
+            background-color: #2196F3;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-search:hover {
+            background-color: #1976D2;
+        }
+        .results-section {
+            margin-top: 20px;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .results-table th,
+        .results-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .results-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-delete:hover {
+            background-color: #da190b;
+        }
+        .record-count {
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+        }
+        .messages {
+            margin-bottom: 15px;
+        }
+        .error {
+            color: red;
+            padding: 8px;
+            background-color: #ffebee;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .success {
+            color: green;
+            padding: 8px;
+            background-color: #e8f5e8;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        /* Estilos para el modal de confirmación */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            text-align: center;
+            z-index: 1001;
+        }
+        
+        .modal-message {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .btn-yes {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-no {
+            background-color: #9E9E9E;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-yes:hover {
+            background-color: #da190b;
+        }
+        
+        .btn-no:hover {
+            background-color: #757575;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <h1>Eliminar Cliente</h1>
+            <a href="/" class="btn-exit">Salir</a>
+        </div>
+        
+        <!-- Mensajes -->
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}{{ message.tags }}{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Sección de búsqueda -->
+        <div class="search-section">
+            <form method="post" id="searchForm">
+                {% csrf_token %}
+                
+                <!-- Radio buttons para tipo de búsqueda -->
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" 
+                               name="tipo_busqueda" 
+                               value="dni" 
+                               {% if tipo_busqueda == 'dni' %}checked{% endif %}
+                               onchange="cambiarTipoBusqueda()">
+                        Por DNI
+                    </label>
+                    <label>
+                        <input type="radio" 
+                               name="tipo_busqueda" 
+                               value="nombre" 
+                               {% if tipo_busqueda == 'nombre' %}checked{% endif %}
+                               onchange="cambiarTipoBusqueda()">
+                        Por Apellidos y Nombres
+                    </label>
+                </div>
+                
+                <!-- Campo de búsqueda -->
+                <div class="search-input-group">
+                    <label for="termino_busqueda" style="margin-right: 10px; font-weight: bold;">Buscar:</label>
+                    <input type="text" 
+                           id="termino_busqueda" 
+                           name="termino_busqueda" 
+                           value="{{ termino_busqueda }}"
+                           placeholder="Ingrese término de búsqueda"
+                           maxlength="80"
+                           required>
+                    <button type="submit" name="consultar" class="btn-search">Consultar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sección de resultados -->
+        {% if clientes_encontrados %}
+        <div class="results-section">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>DNI</th>
+                        <th>Apellidos y Nombres</th>
+                        <th>Fecha Registro</th>
+                        <th>Fecha Sistema</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes_encontrados %}
+                    <tr>
+                        <td>{{ cliente.id_cliente }}</td>
+                        <td>{{ cliente.ape_nom }}</td>
+                        <td>{{ cliente.fec_reg|date:"d/m/Y" }}</td>
+                        <td>{{ cliente.fec_sis|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <button type="button" 
+                                    class="btn-delete" 
+                                    onclick="confirmarEliminacion('{{ cliente.id_cliente }}')">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <!-- Mensaje con cantidad de registros -->
+            <div class="record-count">
+                Total de registros mostrados: {{ total_registros }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-message" id="modalMessage">
+                ¿Desea eliminar el Cliente con DNI XXXXXX?
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-yes" onclick="eliminarCliente()">SÍ</button>
+                <button class="btn-no" onclick="cerrarModal()">NO</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario oculto para eliminar -->
+    <form id="deleteForm" method="post" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="eliminar" value="1">
+        <input type="hidden" name="dni_eliminar" id="dniEliminar">
+        <input type="hidden" name="tipo_busqueda_actual" value="{{ tipo_busqueda }}">
+        <input type="hidden" name="termino_busqueda_actual" value="{{ termino_busqueda }}">
+    </form>
+
+    <script>
+        let dniAEliminar = '';
+        
+        function cambiarTipoBusqueda() {
+            // Limpiar el campo de búsqueda cuando cambia el tipo
+            document.getElementById('termino_busqueda').value = '';
+            
+            // Cambiar el placeholder según el tipo seleccionado
+            const tipoBusqueda = document.querySelector('input[name="tipo_busqueda"]:checked').value;
+            const inputBusqueda = document.getElementById('termino_busqueda');
+            
+            if (tipoBusqueda === 'dni') {
+                inputBusqueda.placeholder = 'Ingrese DNI del cliente';
+                inputBusqueda.maxLength = 8;
+            } else {
+                inputBusqueda.placeholder = 'Ingrese apellidos y nombres';
+                inputBusqueda.maxLength = 80;
+            }
+        }
+        
+        function confirmarEliminacion(dni) {
+            dniAEliminar = dni;
+            document.getElementById('modalMessage').textContent = 
+                `¿Desea eliminar el Cliente con DNI ${dni}?`;
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
+        
+        function eliminarCliente() {
+            document.getElementById('dniEliminar').value = dniAEliminar;
+            document.getElementById('deleteForm').submit();
+        }
+        
+        function cerrarModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            dniAEliminar = '';
+        }
+        
+        // Cerrar modal al hacer clic en el overlay
+        document.getElementById('modalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModal();
+            }
+        });
+        
+        // Configurar placeholder inicial
+        window.onload = function() {
+            cambiarTipoBusqueda();
+            document.getElementById('termino_busqueda').focus();
+        };
+    </script>
+</body>
+</html>
